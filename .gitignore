@@ -1,0 +1,6 @@
+venv/
+build/
+.vscode/
+data/
+.DS_Store
+output.csv
