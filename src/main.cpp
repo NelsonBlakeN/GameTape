@@ -196,35 +196,25 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
         auto archs = accepted_archs_by_position.at(positionResult);
 
         bool foundArchetype = false;
-        std::cout << "Archs found: " << archs.size() << std::endl;
         for (const auto &arch : archs)
         {
-            std::cout << "Arch: " << arch << std::endl;
             if (arch == "*" || archCompare(archetypeResult, arch))
             {
-                std::cout << "Archetype was found" << std::endl;
                 foundArchetype = true;
             }
         }
-        std::cout << foundArchetype << std::endl;
         // TODO: Will this work now that trimming is introduced?
         // if (std::find(archs.begin(), archs.end(), archetypeResult) != archs.end() ||
         //     std::find(archs.begin(), archs.end(), "*") != archs.end())
         if (foundArchetype)
         {
-            std::cout << "Position " + positionResult + " with archetype " + archetypeResult + " should be saved" << std::endl;
-
-            std::string nameResult = grabAndProcessArea(nameArea, screen, "name");
             std::replace(nameResult.begin(), nameResult.end(), '\n', ' ');
             nameResult = rtrim(nameResult);
-            std::cout << "name:\t\t" << toTitleCase(nameResult) << std::endl;
-
             std::string starResult = grabAndProcessArea(starArea, screen, "star");
             std::string starValue = extractStarValue(starResult);
-            std::cout << "star:\t\t" << starResult << ", " << starValue << std::endl;
-
             std::string classResult = grabAndProcessArea(classArea, screen, "class");
-            std::cout << "class:\t\t" << classResult << std::endl;
+
+            // TODO: Before compiling data row, use position and archetype with helper function to get appropriate value
 
             playerData = {
                 toTitleCase(nameResult),
@@ -281,14 +271,7 @@ int main(int argc, char *argv[])
         if (calculateMSE(previousImage, qImage) > 100)
         {
             previousImage = qImage;
-            std::cout << "Loading new player" << std::endl;
             outputData = takeScreenshotAndPerformOCR();
-            for (std::string data : outputData)
-            {
-                std::cout << data << ", ";
-            }
-            std::cout << std::endl;
-            std::cout << "Output data size: " << outputData.size() << std::endl;
 
             if (csvFile.is_open() && outputData.size() > 0)
             {
@@ -316,9 +299,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-/**
- * Current state: Folder structure and util files are mostly created but main is not leveraging most of them
- * For next time: Refactor main to leverage the rest of the util files and folders according and update make file accordingly
- * For the time after that: Create a loop in the main function that mainly identifies when the image has changed
- */

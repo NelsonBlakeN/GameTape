@@ -49,7 +49,6 @@ void moveWindow(const std::string &windowTitle, int x, int y, int width, int hei
 
             if (name.find(windowTitle) != std::string::npos)
             {
-                std::cout << "Found window" << std::endl;
                 windowFound = true;
 
                 int64_t windowID = 0;
@@ -85,24 +84,15 @@ void moveWindow(const std::string &windowTitle, int x, int y, int width, int hei
 
                         if (positionValue && sizeValue)
                         {
-                            std::cout << "Applying size and position changes" << std::endl;
                             AXError positionError = AXUIElementSetAttributeValue(windowElement, kAXPositionAttribute, positionValue);
                             AXError sizeError = AXUIElementSetAttributeValue(windowElement, kAXSizeAttribute, sizeValue);
 
-                            if (positionError == kAXErrorSuccess)
-                            {
-                                std::cout << "Position set successfully" << std::endl;
-                            }
-                            else
+                            if (positionError != kAXErrorSuccess)
                             {
                                 std::cerr << "Failed to set position. Error: " << positionError << std::endl;
                             }
 
-                            if (sizeError == kAXErrorSuccess)
-                            {
-                                std::cout << "Size set successfully" << std::endl;
-                            }
-                            else
+                            if (sizeError != kAXErrorSuccess)
                             {
                                 std::cerr << "Failed to set size. Error: " << sizeError << std::endl;
                             }
