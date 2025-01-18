@@ -43,18 +43,6 @@ double calculateMSE(const QImage &img1, const QImage &img2)
     return mse;
 }
 
-QByteArray imageHash(const QImage &image)
-{
-    QCryptographicHash hasher(QCryptographicHash::Md5);
-    hasher.addData(QByteArrayView(reinterpret_cast<const char *>(image.bits()), image.sizeInBytes()));
-    return hasher.result();
-}
-
-bool areImagesSimilar(const QImage &image1, const QImage &image2)
-{
-    return imageHash(image1) == imageHash(image2);
-}
-
 std::string grabAndProcessArea(std::tuple<int, int, int, int> area, QScreen *screen, std::string imageName)
 {
     QRect captureArea(std::get<0>(area), std::get<1>(area), std::get<2>(area), std::get<3>(area));
@@ -106,48 +94,4 @@ std::string grabAndProcessArea(std::tuple<int, int, int, int> area, QScreen *scr
 
     pixDestroy(&pixImage);
     api.End();
-}
-
-// Capture a screenshot of the entire screen and save it to a file
-bool captureScreenshot(const std::string &filename)
-{
-    // Logic to capture screenshot
-    std::vector<unsigned char> pixelData; // Placeholder for pixel data
-    int width = 1920;                     // Placeholder width
-    int height = 1080;                    // Placeholder height
-
-    // Capture the screenshot (this is just a mockup; actual implementation depends on the platform)
-    std::cout << "Capturing full-screen screenshot..." << std::endl;
-
-    return saveScreenshot(pixelData, width, height, filename);
-}
-
-// Capture a screenshot of a specific region of the screen and save it to a file
-bool captureScreenshotRegion(int x, int y, int width, int height, const std::string &filename)
-{
-    std::vector<unsigned char> pixelData; // Placeholder for pixel data
-
-    // Capture the region of the screen (mockup)
-    std::cout << "Capturing screenshot of region: (" << x << ", " << y << ", " << width << ", " << height << ")" << std::endl;
-
-    return saveScreenshot(pixelData, width, height, filename);
-}
-
-// Utility function to save the screenshot (mocked for this example)
-bool saveScreenshot(const std::vector<unsigned char> &pixelData, int width, int height, const std::string &filename)
-{
-    // Logic to save pixel data to a file (this can be implemented with image libraries like stb_image_write, OpenCV, etc.)
-
-    std::ofstream file(filename, std::ios::binary);
-    if (!file)
-    {
-        std::cerr << "Error saving screenshot to " << filename << std::endl;
-        return false;
-    }
-
-    // Simulate writing data (in a real case, you'd convert pixel data into an image format like PNG, BMP, etc.)
-    std::cout << "Saving screenshot to " << filename << std::endl;
-
-    file.close();
-    return true;
 }

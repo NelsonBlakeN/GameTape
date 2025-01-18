@@ -2,26 +2,6 @@
 #include <iostream>
 #include <ApplicationServices/ApplicationServices.h>
 
-// Create a new window with the given title and dimensions
-bool createWindow(const std::string &title, int width, int height)
-{
-    // Placeholder logic for creating a window (actual implementation depends on the library you're using)
-    std::cout << "Creating window: " << title << " with size " << width << "x" << height << std::endl;
-
-    // In practice, you'd use a graphics library (e.g., SDL, GLFW, Qt) here to create the window
-    return true;
-}
-
-// Resize the current window to the specified width and height
-bool resizeWindow(int width, int height)
-{
-    // Logic to resize the window (mockup)
-    std::cout << "Resizing window to " << width << "x" << height << std::endl;
-
-    // Actual implementation would interact with the OS or graphics library
-    return true;
-}
-
 // Move the window to the specified screen coordinates
 void moveWindow(const std::string &windowTitle, int x, int y, int width, int height)
 {

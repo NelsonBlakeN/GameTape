@@ -167,12 +167,7 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
     }
 
     std::string positionResult = grabAndProcessArea(positionArea, screen, "position");
-    std::cout << "Position: " << positionResult << std::endl;
-
     std::string archetypeResult = grabAndProcessArea(archetypeArea, screen, "archetype");
-    std::cout << "Archetype: " << archetypeResult << std::endl;
-
-    std::cout << positionResult.empty() << " '" << archetypeResult << "' " << (archetypeResult == "Power Back") << " " << (archetypeResult == "Elusive Back") << std::endl;
 
     if (positionResult.empty() &&
         (archetypeResult == "Power Back " || archetypeResult == "Elusive Back "))
@@ -180,17 +175,11 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
         positionResult = "HB";
     }
 
-    std::cout << positionResult.empty() << " " << archetypeResult.empty() << std::endl;
-
     if (!positionResult.empty() &&
         !archetypeResult.empty())
     {
         positionResult = rtrim(positionResult);
         archetypeResult = rtrim(archetypeResult);
-        for (char c : positionResult)
-        {
-            std::cout << c << " " << (int)c << std::endl;
-        }
 
         // TODO: Will this work with [] now that the results are fixed?
         auto archs = accepted_archs_by_position.at(positionResult);
@@ -208,6 +197,7 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
         //     std::find(archs.begin(), archs.end(), "*") != archs.end())
         if (foundArchetype)
         {
+            std::string nameResult = grabAndProcessArea(nameArea, screen, "name");
             std::replace(nameResult.begin(), nameResult.end(), '\n', ' ');
             nameResult = rtrim(nameResult);
             std::string starResult = grabAndProcessArea(starArea, screen, "star");
