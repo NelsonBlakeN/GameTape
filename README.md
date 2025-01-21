@@ -1,4 +1,4 @@
-# GameTime: Get data faster
+# GameTape: Get data faster
 
 ## Description
 
@@ -7,6 +7,15 @@ Stop manually writing down recruits yourself.
 EA College Football 25's 35 recruit limit means making some hard decisions about who to track and who to take off. It's hard to remember who that fallback player was now that your first choice committed somewhere else, but you had to take them off so you could scout some guys at a different position. And when you did go to scout some new guys, you end up adding a bunch of guys that you forgot you had already scouted, because the recruit menu gives no indication of who you've already seen. Now you have to go through the removal animation, go back to the full list (which has reset the last filters you had) and try again.
 
 Enter GameTape. GameTape works alongside game streaming to ingest everything about recruiting that you can't remember yourself. Start by streaming the game to a computer, then as you scroll through the menu, GameTape will make note of every player's name, position, archetype, star value, and class designation. This data is saved to a CSV file that you can build on however you want. Track player's gem status, their offer status, or notes about their potential, ratings, and abilities. Spend your time making the important decisions, and leave the data collection to GameTape.
+
+## System Requirements
+
+### Known working environments
+Currently I run this program with the configuration below, and the code makes assumptions about the location of the data based on these factors. Future improvements could be made to make the program more agnostic to the environment.
+- MacBook pro 14-inch with M3 Pro
+- macOS 14.0
+- External 1080p minitor (assigned to the right of the computer)
+- Remote connection to Windows computer using TeamViewer, which is streaming the Xbox in full screen
 
 ## Getting Started
 
