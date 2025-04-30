@@ -100,6 +100,14 @@ std::string get_data_val_for_player(const std::string &position, const std::stri
     return ""; // Default return if no match
 }
 
+// Xbox web streaming areas
+std::tuple<int, int, int, int> positionAreaWeb = {1036, 436, 1142 - 1036, 463 - 436};
+std::tuple<int, int, int, int> archetypeAreaWeb = {1148, 441, 1271 - 1148, 463 - 441};
+std::tuple<int, int, int, int> nameAreaWeb = {1022, 339, 1268 - 1022, 394 - 339};
+std::tuple<int, int, int, int> starAreaWeb = {748, 253, 886 - 748, 276 - 253};
+std::tuple<int, int, int, int> playercardAreaWeb = {1013, 235, 1276 - 1013, 759 - 235};
+std::tuple<int, int, int, int> classAreaWeb = {1035, 474, 1144 - 1035, 500 - 474};
+
 // iPhone areas
 std::tuple<int, int, int, int> positionAreaPhone = {553, 333, 637 - 553, 352 - 333};
 std::tuple<int, int, int, int> archetypeAreaPhone = {642, 333, 740 - 642, 352 - 333};
