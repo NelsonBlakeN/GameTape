@@ -101,12 +101,18 @@ std::string get_data_val_for_player(const std::string &position, const std::stri
 }
 
 // Xbox web streaming areas
-std::tuple<int, int, int, int> positionAreaWeb = {1036, 436, 1142 - 1036, 463 - 436};
-std::tuple<int, int, int, int> archetypeAreaWeb = {1148, 441, 1271 - 1148, 463 - 441};
-std::tuple<int, int, int, int> nameAreaWeb = {1022, 339, 1268 - 1022, 394 - 339};
-std::tuple<int, int, int, int> starAreaWeb = {748, 253, 886 - 748, 276 - 253};
-std::tuple<int, int, int, int> playercardAreaWeb = {1013, 235, 1276 - 1013, 759 - 235};
-std::tuple<int, int, int, int> classAreaWeb = {1035, 474, 1144 - 1035, 500 - 474};
+std::tuple<int, int, int, int> positionAreaWeb =
+    {787, 498, 870 - 787, 517 - 498};
+std::tuple<int, int, int, int> archetypeAreaWeb =
+    {874, 498, 967 - 874, 518 - 498};
+std::tuple<int, int, int, int> nameAreaWeb =
+    {777, 422, 965 - 777, 460 - 422};
+std::tuple<int, int, int, int> starAreaWeb =
+    {570, 356, 673 - 570, 373 - 356};
+std::tuple<int, int, int, int> playercardAreaWeb =
+    {771, 346, 972 - 771, 744 - 346};
+std::tuple<int, int, int, int> classAreaWeb =
+    {788, 527, 869 - 788, 547 - 527};
 
 // iPhone areas
 std::tuple<int, int, int, int> positionAreaPhone = {553, 333, 637 - 553, 352 - 333};
@@ -182,14 +188,8 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
         return playerData;
     }
 
-    std::string positionResult = grabAndProcessArea(positionArea, screen, "position");
-    std::string archetypeResult = grabAndProcessArea(archetypeArea, screen, "archetype");
-
-    if (positionResult.empty() &&
-        (archetypeResult == "Power Back " || archetypeResult == "Elusive Back "))
-    {
-        positionResult = "HB";
-    }
+    std::string positionResult = grabAndProcessArea(positionAreaWeb, screen, "position_" + generateRandomString(5), true, tesseract::PSM_SINGLE_LINE);
+    std::string archetypeResult = grabAndProcessArea(archetypeAreaWeb, screen, "archetype_" + generateRandomString(5), true, tesseract::PSM_SINGLE_LINE);
 
     if (!positionResult.empty() &&
         !archetypeResult.empty())
@@ -213,12 +213,15 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
         //     std::find(archs.begin(), archs.end(), "*") != archs.end())
         if (foundArchetype)
         {
-            std::string nameResult = grabAndProcessArea(nameArea, screen, "name");
+            std::string nameResult = grabAndProcessArea(nameAreaWeb, screen, "name_" + generateRandomString(5), false, tesseract::PSM_SINGLE_BLOCK);
             std::replace(nameResult.begin(), nameResult.end(), '\n', ' ');
             nameResult = rtrim(nameResult);
-            std::string starResult = grabAndProcessArea(starArea, screen, "star");
+            std::cout << "Name result: " << nameResult << std::endl;
+            std::string starResult = grabAndProcessArea(starAreaWeb, screen, "star_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
+            std::cout << "Star result: " << starResult << std::endl;
             std::string starValue = extractStarValue(starResult);
-            std::string classResult = grabAndProcessArea(classArea, screen, "class");
+            std::string classResult = grabAndProcessArea(classAreaWeb, screen, "class_" + generateRandomString(5), true, tesseract::PSM_SINGLE_LINE);
+            std::cout << "Class result: " << classResult << std::endl;
 
             // TODO: Before compiling data row, use position and archetype with helper function to get appropriate value
 
