@@ -17,6 +17,8 @@
 #include "utils/string_utils.hpp"
 #include "utils/screenshot_utils.hpp"
 #include <QThread>
+#include "utils/file_utils.hpp"
+#include "utils/ocr_utils.hpp"
 
 std::map<std::string, std::vector<std::string>> accepted_archs_by_position = {
     {"ATH", {"*"}},
@@ -29,6 +31,9 @@ std::map<std::string, std::vector<std::string>> accepted_archs_by_position = {
     {"LT", {"Power", "Agile", "Pass Protector"}},
     {"LG", {"Power", "Agile"}},
     {"C", {"Power", "Agile"}},
+    {"Cc", {"Power", "Agile"}},
+    {"CC", {"Power", "Agile"}},
+    {"c", {"Power", "Agile"}},
     {"RG", {"Power", "Agile"}},
     {"RT", {"Power", "Agile", "Pass Protector"}},
     {"LE", {"Power Rusher", "Run Stopper"}},
@@ -113,6 +118,8 @@ std::tuple<int, int, int, int> playercardAreaWeb =
     {771, 346, 972 - 771, 744 - 346};
 std::tuple<int, int, int, int> classAreaWeb =
     {788, 527, 869 - 788, 547 - 527};
+std::tuple<int, int, int, int> positionAreaWebBackup =
+    {73, 356, 178 - 73, 374 - 356};
 
 // iPhone areas
 std::tuple<int, int, int, int> positionAreaPhone = {553, 333, 637 - 553, 352 - 333};
@@ -174,7 +181,249 @@ std::string extractStarValue(const std::string &input)
         return std::string(1, firstChar); // Convert char to a string
     }
 
-    throw std::runtime_error("The first character is not a digit");
+    std::cout << "First character is not a digit: " << firstChar << std::endl;
+    return "";
+}
+
+std::string getValidData(
+    std::tuple<int, int, int, int> area,
+    tesseract::PageSegMode psm,
+    std::function<bool(std::string)> isValid,
+    bool saveImage = false,
+    std::string imageName = "screenshot",
+    std::tuple<int, int, int, int> backupArea = {0, 0, 0, 0})
+{
+    Pix *img = captureScreenshot(area);
+    std::string text = getText(img, saveImage, psm, imageName + "_" + generateRandomString(5));
+    std::string textFromBinary = getTextFromBinary(img, saveImage, psm, imageName + "_" + generateRandomString(5));
+    // std::cout << "Text from binary: " << textFromBinary << std::endl;
+
+    if (!isValid(text))
+    {
+        std::cout << "Invalid data: " << text << std::endl;
+        std::cout << "Attempting backup area..." << std::endl;
+        if (backupArea != std::make_tuple(0, 0, 0, 0))
+        {
+            img = captureScreenshot(backupArea);
+            text = getText(img, saveImage, psm, imageName + "_" + generateRandomString(5));
+            std::cout << "Backup area text: " << text << std::endl;
+            textFromBinary = getTextFromBinary(img, saveImage, psm, imageName + "_" + generateRandomString(5));
+            std::cout << "Backup text from binary: " << textFromBinary << std::endl;
+            if (!isValid(text))
+            {
+                std::cout << "Invalid data from backup area: " << text << std::endl;
+
+                if (saveImage)
+                {
+                    QString folderName = QString::fromStdString(text);
+                    QString fileName = QString::fromStdString(imageName + ".png");
+
+                    if (!saveImageToFolder(img, folderName, fileName))
+                    {
+                        std::cerr << "Failed to save image to folder." << std::endl;
+                    }
+                }
+                pixDestroy(&img);
+                return "";
+            }
+
+            return text;
+        }
+        else
+        {
+            std::cout << "No backup area provided." << std::endl;
+            pixDestroy(&img);
+            if (saveImage)
+            {
+                QString folderName = QString::fromStdString(text);
+                QString fileName = QString::fromStdString(imageName + ".png");
+
+                if (!saveImageToFolder(img, folderName, fileName))
+                {
+                    std::cerr << "Failed to save image to folder." << std::endl;
+                }
+            }
+            return "";
+        }
+        if (saveImage)
+        {
+            QString folderName = QString::fromStdString(text);
+            QString fileName = QString::fromStdString(imageName + ".png");
+
+            if (!saveImageToFolder(img, folderName, fileName))
+            {
+                std::cerr << "Failed to save image to folder." << std::endl;
+            }
+        }
+        return "";
+    }
+
+    if (saveImage)
+    {
+        QString folderName = QString::fromStdString(text);
+        QString fileName = QString::fromStdString(imageName + ".png");
+
+        if (!saveImageToFolder(img, folderName, fileName))
+        {
+            std::cerr << "Failed to save image to folder." << std::endl;
+        }
+    }
+
+    pixDestroy(&img);
+
+    return text;
+}
+
+std::string getValidDataAndTitleCase(
+    std::tuple<int, int, int, int> area,
+    tesseract::PageSegMode psm,
+    std::function<bool(std::string)> isValid,
+    bool saveImage = false,
+    std::string imageName = "screenshot")
+{
+    std::string data = getValidData(area, psm, isValid, saveImage, imageName);
+    std::string titleCasedData = toTitleCase(data);
+
+    return titleCasedData;
+}
+
+std::string getValidDataAndUpperCase(
+    std::tuple<int, int, int, int> area,
+    tesseract::PageSegMode psm,
+    std::function<bool(std::string)> isValid,
+    bool saveImage = false,
+    std::string imageName = "screenshot",
+    std::tuple<int, int, int, int> backupArea = {0, 0, 0, 0})
+{
+    std::string data = getValidData(area, psm, isValid, saveImage, imageName, backupArea);
+    std::transform(data.begin(), data.end(), data.begin(), ::toupper);
+
+    return data;
+}
+
+std::string getValidPositionData(bool saveImage)
+{
+    Pix *positionImg = captureScreenshot(positionAreaWeb);
+    std::string positionText = getText(positionImg, saveImage, tesseract::PSM_SINGLE_LINE, "position_" + generateRandomString(5));
+
+    // TODO: Ideally this would only save the image if the text result was valid in the config, but that would require checking it here
+    // which isn't really part of the responsibility of this function
+    // Theoretically, the function could be expanded to only return the text if the value is found in the config, and null otherwise.
+    // This would allow the output data to check for "getValidPositionData," and if that was null, do not proceed with the rest of the data
+    if (saveImage)
+    {
+        QString folderName = QString::fromStdString(positionText);
+        QString fileName = QString::fromStdString("position_" + generateRandomString(5) + ".png");
+
+        if (!saveImageToFolder(positionImg, folderName, fileName))
+        {
+            std::cerr << "Failed to save image to folder." << std::endl;
+        }
+    }
+
+    auto it = accepted_archs_by_position.find(positionText);
+    if (it == accepted_archs_by_position.end())
+    {
+        std::cout << "Position not found: " << positionText << std::endl;
+        return "";
+    }
+
+    return positionText;
+}
+
+std::vector<std::string> getOutputData()
+{
+    std::vector<std::string> outputData;
+
+    std::string genericPositionResultUpper = getValidDataAndUpperCase(
+        positionAreaWeb,
+        tesseract::PSM_SINGLE_LINE,
+        [](const std::string &text)
+        {
+            auto it = accepted_archs_by_position.find(text);
+            if (it == accepted_archs_by_position.end())
+            {
+                std::cout << "Position not found: " << text << std::endl;
+                return false;
+            }
+
+            return true;
+        },
+        true,
+        "position_" + generateRandomString(5),
+        positionAreaWebBackup);
+    std::cout << "New output generic position result upper: " << genericPositionResultUpper << std::endl;
+
+    std::string genericArchetypeResultTitle = getValidDataAndTitleCase(
+        archetypeAreaWeb,
+        tesseract::PSM_SINGLE_LINE,
+        [&genericPositionResultUpper](const std::string &text)
+        {
+            auto archs = accepted_archs_by_position.find(genericPositionResultUpper)->second;
+            if (std::find(archs.begin(), archs.end(), text) == archs.end() &&
+                std::find(archs.begin(), archs.end(), "*") == archs.end())
+            {
+                std::cout << "Archetype not found: " << text << std::endl;
+                return false;
+            }
+
+            return true;
+        },
+        false,
+        "archetype_" + generateRandomString(5));
+    std::cout << "New output generic archetype result upper: " << genericArchetypeResultTitle << std::endl;
+
+    if (!genericPositionResultUpper.empty() && !genericArchetypeResultTitle.empty())
+    {
+        std::cout << "Found valid position and archetype" << std::endl;
+        std::string nameResult = getValidDataAndTitleCase(
+            nameAreaWeb,
+            tesseract::PSM_SINGLE_BLOCK,
+            [](const std::string &text)
+            {
+                return !text.empty();
+            },
+            false,
+            "name_" + generateRandomString(5));
+        std::cout << "New output name result: " << nameResult << std::endl;
+        std::string starResult = getValidDataAndUpperCase(
+            starAreaWeb,
+            tesseract::PSM_SINGLE_LINE,
+            [](const std::string &text)
+            {
+                return !text.empty();
+            },
+            false,
+            "star_" + generateRandomString(5));
+        std::string starValue = extractStarValue(starResult);
+        std::cout << "New output star result: " << starValue << std::endl;
+        std::string classResult = getValidDataAndUpperCase(
+            classAreaWeb,
+            tesseract::PSM_SINGLE_LINE,
+            [](const std::string &text)
+            {
+                return !text.empty();
+            },
+            false,
+            "class_" + generateRandomString(5));
+        std::cout << "New output class result: " << classResult << std::endl;
+
+        outputData = {
+            nameResult,
+            genericPositionResultUpper,
+            genericArchetypeResultTitle,
+            starValue,
+            classResult};
+    }
+    else
+    {
+        std::cout << "Position or archetype values were empty" << std::endl;
+        std::cout << "Position: " << genericPositionResultUpper << std::endl;
+        std::cout << "Archetype: " << genericArchetypeResultTitle << std::endl;
+        return outputData;
+    }
+
+    return outputData;
 }
 
 std::vector<std::string> takeScreenshotAndPerformOCR()
@@ -188,18 +437,26 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
         return playerData;
     }
 
-    std::string positionResult = grabAndProcessArea(positionAreaWeb, screen, "position_" + generateRandomString(5), true, tesseract::PSM_SINGLE_LINE);
-    std::string archetypeResult = grabAndProcessArea(archetypeAreaWeb, screen, "archetype_" + generateRandomString(5), true, tesseract::PSM_SINGLE_LINE);
+    std::string positionResult = grabAndProcessArea(positionAreaWeb, screen, "position_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
+    std::string archetypeResult = grabAndProcessArea(archetypeAreaWeb, screen, "archetype_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
 
+    // TODO: Position result should always be uppercase
     if (!positionResult.empty() &&
         !archetypeResult.empty())
     {
+        // std::cout << "Position result: " << positionResult << std::endl;
         positionResult = rtrim(positionResult);
+        // std::cout << "Archetype result: " << archetypeResult << std::endl;
         archetypeResult = rtrim(archetypeResult);
 
-        // TODO: Will this work with [] now that the results are fixed?
-        auto archs = accepted_archs_by_position.at(positionResult);
+        auto it = accepted_archs_by_position.find(positionResult);
+        if (it == accepted_archs_by_position.end())
+        {
+            std::cout << "Position not found: " << positionResult << std::endl;
+            return playerData;
+        }
 
+        auto archs = it->second;
         bool foundArchetype = false;
         for (const auto &arch : archs)
         {
@@ -216,12 +473,12 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
             std::string nameResult = grabAndProcessArea(nameAreaWeb, screen, "name_" + generateRandomString(5), false, tesseract::PSM_SINGLE_BLOCK);
             std::replace(nameResult.begin(), nameResult.end(), '\n', ' ');
             nameResult = rtrim(nameResult);
-            std::cout << "Name result: " << nameResult << std::endl;
+            // std::cout << "Name result: " << nameResult << std::endl;
             std::string starResult = grabAndProcessArea(starAreaWeb, screen, "star_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
-            std::cout << "Star result: " << starResult << std::endl;
+            // std::cout << "Star result: " << starResult << std::endl;
             std::string starValue = extractStarValue(starResult);
-            std::string classResult = grabAndProcessArea(classAreaWeb, screen, "class_" + generateRandomString(5), true, tesseract::PSM_SINGLE_LINE);
-            std::cout << "Class result: " << classResult << std::endl;
+            std::string classResult = grabAndProcessArea(classAreaWeb, screen, "class_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
+            // std::cout << "Class result: " << classResult << std::endl;
 
             // TODO: Before compiling data row, use position and archetype with helper function to get appropriate value
 
@@ -236,13 +493,15 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
         }
         else
         {
-            std::cout << "Did not find position" << std::endl;
+            std::cout << "Did not find archetype '" << archetypeResult << "' for position " << positionResult << std::endl;
             return playerData;
         }
     }
     else
     {
-        std::cout << "Got no position result" << std::endl;
+        std::cout << "Position or archetype values were empty" << std::endl;
+        std::cout << "Position: " << positionResult << std::endl;
+        std::cout << "Archetype: " << archetypeResult << std::endl;
         return playerData;
     }
 
@@ -252,20 +511,23 @@ std::vector<std::string> takeScreenshotAndPerformOCR()
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    std::string windowName = mode == "phone" ? "iPhone Mirroring" : "DESKTOP-2MVSFNI (174 915 698)";
+    // windowName = "Xbox Series X | Xbox Remote Play on  Xbox.com";
+    windowName = "EA SPORTS™ College Football 25 | Xbox Cloud Gaming (Beta) on  Xbox.com";
 
-    moveWindow("DESKTOP-2MVSFNI (174 915 698)", 1514, 27, 3431 - 1514, 1079 - 27);
-
-    takeScreenshotAndPerformOCR();
+    bool result = moveWindow(windowName, 0, 40, 1008, 982);
+    if (!result)
+    {
+        std::cerr << "Failed to move the window." << std::endl;
+        return 1;
+    }
 
     QScreen *screen = QApplication::primaryScreen();
-    std::tuple<int, int, int, int> area = nameArea;
+    std::tuple<int, int, int, int> area = nameAreaWeb;
     QImage previousImage;
     std::vector<std::string> outputData;
-    std::ofstream csvFile("output.csv", std::ios::app);
-    if (!csvFile.is_open())
-    {
-        std::cout << "Could not open the file" << std::endl;
-    }
+    std::vector<std::string> newOutputData;
+    std::ofstream csvFile;
     while (true)
     {
         QRect captureArea(std::get<0>(area), std::get<1>(area), std::get<2>(area), std::get<3>(area));
@@ -276,14 +538,50 @@ int main(int argc, char *argv[])
             previousImage = qImage;
             continue;
         }
-
         if (calculateMSE(previousImage, qImage) > 100)
         {
             previousImage = qImage;
             outputData = takeScreenshotAndPerformOCR();
+            newOutputData = getOutputData();
 
-            if (csvFile.is_open() && outputData.size() > 0)
+            if (newOutputData.size() > 0)
             {
+                // TODO: Move csv management to file utils
+                csvFile.open("output2.csv", std::ios::app);
+                if (!csvFile.is_open())
+                {
+                    std::cout << "Could not open the file" << std::endl;
+                }
+                else
+                {
+                    for (size_t i = 0; i < newOutputData.size(); ++i)
+                    {
+                        csvFile << newOutputData[i];
+                        if (i < newOutputData.size() - 1)
+                        {
+                            csvFile << ",";
+                        }
+                    }
+                    csvFile << "\n";
+                    csvFile.flush();
+                    csvFile.close();
+                }
+            }
+            else
+            {
+                std::cout << "No data to write" << std::endl;
+            }
+
+            if (outputData.size() > 0)
+            {
+                // TODO: Move csv management to file utils
+                csvFile.open("output.csv", std::ios::app);
+                if (!csvFile.is_open())
+                {
+                    std::cout << "Could not open the file" << std::endl;
+                }
+                else
+                {
                 for (size_t i = 0; i < outputData.size(); ++i)
                 {
                     csvFile << outputData[i];
@@ -294,10 +592,12 @@ int main(int argc, char *argv[])
                 }
                 csvFile << "\n";
                 csvFile.flush();
+                    csvFile.close();
+                }
             }
             else
             {
-                std::cout << "File was not open" << std::endl;
+                std::cout << "No data to write" << std::endl;
             }
         }
 

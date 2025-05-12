@@ -64,6 +64,37 @@ void SavePixToFile(Pix *pix, const char *filename)
     pixWrite(filename, pix, IFF_PNG);
 }
 
+/*
+ * Save the screenshot to a folder with a specific name
+ * @param screenshot The screenshot to save
+ * @param folderName The name of the folder to save the image in
+ * @param fileName The name of the file to save the image as
+ * @return
+ */
+Pix *captureScreenshot(
+    std::tuple<int, int, int, int> area,
+    bool saveImage)
+{
+    QScreen *screen = QApplication::primaryScreen();
+    QRect captureArea(std::get<0>(area), std::get<1>(area), std::get<2>(area), std::get<3>(area));
+    QPixmap screenshot = screen->grabWindow(0, captureArea.x(), captureArea.y(), captureArea.width(), captureArea.height());
+    QImage qImage = screenshot.toImage();
+
+    Pix *pixImage = nullptr;
+    if (qImage.format() != QImage::Format_ARGB32)
+    {
+        qImage = qImage.convertToFormat(QImage::Format_ARGB32);
+    }
+
+    pixImage = pixCreate(qImage.width(), qImage.height(), 32);
+
+    // TODO: Do we need pixData?
+    uint8_t *pixData = reinterpret_cast<uint8_t *>(pixGetData(pixImage));
+    memcpy(pixData, qImage.bits(), qImage.sizeInBytes());
+
+    return pixImage;
+}
+
 std::string grabAndProcessArea(
     std::tuple<int, int, int, int> area,
     QScreen *screen,

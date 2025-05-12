@@ -24,7 +24,9 @@ TARGET = $(BUILD_DIR)/app
 SOURCES = $(SRC_DIR)/main.cpp \
 			$(UTILS_DIR)/screenshot_utils.cpp \
 			$(UTILS_DIR)/window_utils.cpp \
-			$(UTILS_DIR)/string_utils.cpp
+			$(UTILS_DIR)/string_utils.cpp \
+			$(UTILS_DIR)/file_utils.cpp \
+			$(UTILS_DIR)/ocr_utils.cpp
 
 $(TARGET): $(SOURCES)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(FRAMEWORKS) $(LIBRARIES) -o $(TARGET) $(SOURCES) $(TESSERACT_LIBS) $(LEPTONICA_LIBS)
