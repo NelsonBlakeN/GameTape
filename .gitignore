@@ -1,6 +1,12 @@
 venv/
 build/
 .vscode/
-data/
 .DS_Store
 output.csv
+*png
+*csv
+data/images/**/*.txt
+training_output/*
+!training_output/*.traineddata
+*images
+unicharset
