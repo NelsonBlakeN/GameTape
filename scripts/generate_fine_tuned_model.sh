@@ -9,8 +9,12 @@ VERSION_FILE="data/newest_model_version.txt"  # File to track the newest model v
 
 # Ensure the version file exists and initialize it if necessary
 if [ ! -f "$VERSION_FILE" ]; then
-    echo "1" > "$VERSION_FILE"
+    echo "0" > "$VERSION_FILE"
 fi
+
+# Increment the version number and update the version file
+NEW_VERSION=$((MODEL_VERSION + 1))
+echo "$NEW_VERSION" > "$VERSION_FILE"
 
 # Read the current version from the version file
 MODEL_VERSION=$(cat "$VERSION_FILE")
@@ -70,10 +74,6 @@ if [ $? -eq 0 ]; then
     echo "Success! Created fine-tuned model: $OUTPUT_DIR/$MODEL_NAME"
     echo "To use this model, copy it to your tessdata directory:"
     echo "sudo cp $OUTPUT_DIR/$MODEL_NAME $TESSDATA_PREFIX/"
-
-    # Increment the version number and update the version file
-    NEW_VERSION=$((MODEL_VERSION + 1))
-    echo "$NEW_VERSION" > "$VERSION_FILE"
 else
     echo "Error: Failed to create final traineddata file."
     exit 1
