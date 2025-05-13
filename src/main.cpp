@@ -31,8 +31,6 @@ std::map<std::string, std::vector<std::string>> accepted_archs_by_position = {
     {"LT", {"Power", "Agile", "Pass Protector"}},
     {"LG", {"Power", "Agile"}},
     {"C", {"Power", "Agile"}},
-    {"Cc", {"Power", "Agile"}},
-    {"CC", {"Power", "Agile"}},
     {"c", {"Power", "Agile"}},
     {"RG", {"Power", "Agile"}},
     {"RT", {"Power", "Agile", "Pass Protector"}},
@@ -196,10 +194,45 @@ std::string getValidData(
     Pix *img = captureScreenshot(area);
     std::string text = getText(img, saveImage, psm, imageName + "_" + generateRandomString(5));
     std::string textFromBinary = getTextFromBinary(img, saveImage, psm, imageName + "_" + generateRandomString(5));
-    // std::cout << "Text from binary: " << textFromBinary << std::endl;
 
-    if (!isValid(text))
+    if (isValid(text))
     {
+        if (saveImage)
+        {
+            QString folderName = QString::fromStdString(text);
+            QString fileName = QString::fromStdString(imageName + ".png");
+
+            if (!saveImageToFolder(img, folderName, fileName))
+            {
+                std::cerr << "Failed to save image to folder." << std::endl;
+            }
+        }
+
+        pixDestroy(&img);
+
+        return text;
+    }
+
+    std::cout << "Text was not valid, checking binary" << std::endl;
+
+    if (isValid(textFromBinary))
+    {
+        if (saveImage)
+        {
+            QString folderName = QString::fromStdString(textFromBinary);
+            QString fileName = QString::fromStdString(imageName + ".png");
+
+            if (!saveImageToFolder(img, folderName, fileName))
+            {
+                std::cerr << "Failed to save image to folder." << std::endl;
+            }
+        }
+
+        pixDestroy(&img);
+
+        return textFromBinary;
+    }
+
         std::cout << "Invalid data: " << text << std::endl;
         std::cout << "Attempting backup area..." << std::endl;
         if (backupArea != std::make_tuple(0, 0, 0, 0))
@@ -227,34 +260,14 @@ std::string getValidData(
                 return "";
             }
 
+        pixDestroy(&img);
+
             return text;
         }
         else
         {
             std::cout << "No backup area provided." << std::endl;
             pixDestroy(&img);
-            if (saveImage)
-            {
-                QString folderName = QString::fromStdString(text);
-                QString fileName = QString::fromStdString(imageName + ".png");
-
-                if (!saveImageToFolder(img, folderName, fileName))
-                {
-                    std::cerr << "Failed to save image to folder." << std::endl;
-                }
-            }
-            return "";
-        }
-        if (saveImage)
-        {
-            QString folderName = QString::fromStdString(text);
-            QString fileName = QString::fromStdString(imageName + ".png");
-
-            if (!saveImageToFolder(img, folderName, fileName))
-            {
-                std::cerr << "Failed to save image to folder." << std::endl;
-            }
-        }
         return "";
     }
 
@@ -375,7 +388,6 @@ std::vector<std::string> getOutputData()
 
     if (!genericPositionResultUpper.empty() && !genericArchetypeResultTitle.empty())
     {
-        std::cout << "Found valid position and archetype" << std::endl;
         std::string nameResult = getValidDataAndTitleCase(
             nameAreaWeb,
             tesseract::PSM_SINGLE_BLOCK,
@@ -521,6 +533,8 @@ int main(int argc, char *argv[])
         std::cerr << "Failed to move the window." << std::endl;
         return 1;
     }
+
+    std::cout << "Current model name: " << getLatestModelName() << std::endl;
 
     QScreen *screen = QApplication::primaryScreen();
     std::tuple<int, int, int, int> area = nameAreaWeb;

@@ -80,16 +80,11 @@ bool saveImageToFolder(const QPixmap &image, const QString &folderName, const QS
     if (createFolder("data/images/" + folderName))
     {
         QString filePath = "data/images/" + folderName + "/" + imageName;
-        // QString filePath = imageName;
         if (!image.save(filePath))
         {
             std::cerr << "Failed to save image: " << filePath.toStdString() << std::endl;
             return false;
         }
-        // else
-        // {
-        //     std::cout << "Image saved to: " << filePath.toStdString() << std::endl;
-        // }
         return true;
     }
     return false;

@@ -3,6 +3,8 @@
 
 #include <string>
 
+std::string getLatestModelName();
+
 std::string getText(
     Pix *pixImage,
     bool saveImage,

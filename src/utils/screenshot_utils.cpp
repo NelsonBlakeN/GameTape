@@ -126,7 +126,7 @@ std::string grabAndProcessArea(
     memcpy(pixData, qImage.bits(), qImage.sizeInBytes());
 
     tesseract::TessBaseAPI api;
-    if (api.Init(nullptr, "eng"))
+    if (api.Init("/opt/homebrew/share/tessdata", "eng.custom"))
     {
         std::cerr << "Failed to initialize Tesseract." << std::endl;
         pixDestroy(&pixImage);
@@ -139,6 +139,7 @@ std::string grabAndProcessArea(
     if (saveImage)
     {
         SavePixToFile(binaryImage, "binary_image.png");
+    }
 
         api.SetPageSegMode(psm);
         api.SetImage(binaryImage);

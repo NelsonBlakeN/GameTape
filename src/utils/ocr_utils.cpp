@@ -21,8 +21,13 @@
  * Functions that are only responsible for getting text from images
  */
 
-std::string getLatestModelName(const std::string &versionFilePath, const std::string &langCode, const std::string &fontName)
+std::string getLatestModelName()
 {
+    const std::string tessdataPath = "/opt/homebrew/share/tessdata";
+    const std::string versionFilePath = "data/newest_model_version.txt";
+    const std::string langCode = "eng";
+    const std::string fontName = "custom";
+
     // Open the version file
     std::ifstream versionFile(versionFilePath);
     if (!versionFile.is_open())
@@ -51,8 +56,7 @@ Pix *BinarizeImageOcr(Pix *pixImage)
     // Convert image to grayscale
     Pix *grayImage = pixConvertRGBToLuminance(pixImage);
 
-    // Good threshold for star recognition: 168 (although not mandatory)
-    Pix *binaryImage = pixThresholdToBinary(grayImage, 200);
+    Pix *binaryImage = pixThresholdToBinary(grayImage, 125);
 
     pixDestroy(&grayImage); // Clean up the grayscale image
     return binaryImage;
@@ -73,7 +77,7 @@ std::string getTextFromBinary(
     std::string modelName;
     try
     {
-        modelName = getLatestModelName(versionFilePath, langCode, fontName);
+        modelName = getLatestModelName();
     }
     catch (const std::exception &e)
     {
@@ -83,7 +87,7 @@ std::string getTextFromBinary(
 
     // Initialize Tesseract with the latest model
     tesseract::TessBaseAPI api;
-    if (api.Init(tessdataPath.c_str(), modelName.c_str()))
+    if (api.Init("/opt/homebrew/share/tessdata", modelName.c_str()))
     {
         std::cerr << "Failed to initialize Tesseract." << std::endl;
         pixDestroy(&pixImage);
@@ -135,7 +139,7 @@ std::string getText(
     std::string modelName;
     try
     {
-        modelName = getLatestModelName(versionFilePath, langCode, fontName);
+        modelName = getLatestModelName();
     }
     catch (const std::exception &e)
     {
@@ -145,7 +149,7 @@ std::string getText(
 
     // Initialize Tesseract with the latest model
     tesseract::TessBaseAPI api;
-    if (api.Init(tessdataPath.c_str(), modelName.c_str()))
+    if (api.Init("/opt/homebrew/share/tessdata", modelName.c_str()))
     {
         std::cerr << "Failed to initialize Tesseract." << std::endl;
         pixDestroy(&pixImage);
