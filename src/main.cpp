@@ -22,6 +22,7 @@
 
 std::map<std::string, std::vector<std::string>> accepted_archs_by_position = {
     {"ATH", {"*"}},
+    {"QB", {"*"}},
     {"QB (Right)", {"*"}},
     {"OB (Right)", {"*"}},
     {"QB (Left)", {"*"}},
@@ -31,7 +32,6 @@ std::map<std::string, std::vector<std::string>> accepted_archs_by_position = {
     {"LT", {"Power", "Agile", "Pass Protector"}},
     {"LG", {"Power", "Agile"}},
     {"C", {"Power", "Agile"}},
-    {"c", {"Power", "Agile"}},
     {"RG", {"Power", "Agile"}},
     {"RT", {"Power", "Agile", "Pass Protector"}},
     {"LE", {"Power Rusher", "Run Stopper"}},
@@ -105,7 +105,8 @@ std::string get_data_val_for_player(const std::string &position, const std::stri
 
 // Xbox web streaming areas
 std::tuple<int, int, int, int> positionAreaWeb =
-    {787, 498, 870 - 787, 517 - 498};
+    {73, 356, 178 - 73, 374 - 356};
+
 std::tuple<int, int, int, int> archetypeAreaWeb =
     {874, 498, 967 - 874, 518 - 498};
 std::tuple<int, int, int, int> nameAreaWeb =
@@ -117,7 +118,7 @@ std::tuple<int, int, int, int> playercardAreaWeb =
 std::tuple<int, int, int, int> classAreaWeb =
     {788, 527, 869 - 788, 547 - 527};
 std::tuple<int, int, int, int> positionAreaWebBackup =
-    {73, 356, 178 - 73, 374 - 356};
+    {787, 498, 870 - 787, 517 - 498};
 
 // iPhone areas
 std::tuple<int, int, int, int> positionAreaPhone = {553, 333, 637 - 553, 352 - 333};
@@ -154,7 +155,6 @@ std::vector<std::tuple<int, int, int, int>> areas = {
 // TODO: This function may not be needed anymore once the trimming is properly implemented, but needs confirmation
 bool archCompare(std::string archResult, std::string archetype)
 {
-    std::cout << "Prior check: " << (archResult == archetype) << std::endl;
     for (size_t i = 0; i < archetype.size(); ++i)
     {
         if (archetype[i] != archResult[i])
@@ -254,8 +254,39 @@ std::string getValidData(
                     if (!saveImageToFolder(img, folderName, fileName))
                     {
                         std::cerr << "Failed to save image to folder." << std::endl;
+                }
+                else
+                {
+                    std::cout << "Saved image to folder: " << folderName.toStdString() << "/" << fileName.toStdString() << std::endl;
+                }
+            }
+
+            if (!isValid(textFromBinary))
+            {
+                std::cout << "Invalid data from binary backup area: " << textFromBinary << std::endl;
+                if (saveImage)
+                {
+                    QString folderName = QString::fromStdString(text);
+                    QString fileName = QString::fromStdString(imageName + ".png");
+
+                    if (!saveImageToFolder(img, folderName, fileName))
+                    {
+                        std::cerr << "Failed to save image to folder." << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "Saved image to folder: " << folderName.toStdString() << "/" << fileName.toStdString() << std::endl;
                     }
                 }
+                pixDestroy(&img);
+                return "";
+            }
+            else
+            {
+                pixDestroy(&img);
+                return textFromBinary;
+            }
+
                 pixDestroy(&img);
                 return "";
             }
@@ -353,7 +384,10 @@ std::vector<std::string> getOutputData()
         tesseract::PSM_SINGLE_LINE,
         [](const std::string &text)
         {
-            auto it = accepted_archs_by_position.find(text);
+            std::string upperText = text;
+            std::transform(upperText.begin(), upperText.end(), upperText.begin(), ::toupper);
+
+            auto it = accepted_archs_by_position.find(upperText);
             if (it == accepted_archs_by_position.end())
             {
                 std::cout << "Position not found: " << text << std::endl;
@@ -372,6 +406,12 @@ std::vector<std::string> getOutputData()
         tesseract::PSM_SINGLE_LINE,
         [&genericPositionResultUpper](const std::string &text)
         {
+            if (genericPositionResultUpper.empty())
+            {
+                std::cout << "Generic position result upper is empty" << std::endl;
+                return false;
+            }
+
             auto archs = accepted_archs_by_position.find(genericPositionResultUpper)->second;
             if (std::find(archs.begin(), archs.end(), text) == archs.end() &&
                 std::find(archs.begin(), archs.end(), "*") == archs.end())
@@ -419,6 +459,12 @@ std::vector<std::string> getOutputData()
             false,
             "class_" + generateRandomString(5));
         std::cout << "New output class result: " << classResult << std::endl;
+
+        std::transform(
+            genericPositionResultUpper.begin(),
+            genericPositionResultUpper.end(),
+            genericPositionResultUpper.begin(),
+            ::toupper);
 
         outputData = {
             nameResult,
@@ -555,7 +601,6 @@ int main(int argc, char *argv[])
         if (calculateMSE(previousImage, qImage) > 100)
         {
             previousImage = qImage;
-            outputData = takeScreenshotAndPerformOCR();
             newOutputData = getOutputData();
 
             if (newOutputData.size() > 0)
@@ -572,34 +617,6 @@ int main(int argc, char *argv[])
                     {
                         csvFile << newOutputData[i];
                         if (i < newOutputData.size() - 1)
-                        {
-                            csvFile << ",";
-                        }
-                    }
-                    csvFile << "\n";
-                    csvFile.flush();
-                    csvFile.close();
-                }
-            }
-            else
-            {
-                std::cout << "No data to write" << std::endl;
-            }
-
-            if (outputData.size() > 0)
-            {
-                // TODO: Move csv management to file utils
-                csvFile.open("output.csv", std::ios::app);
-                if (!csvFile.is_open())
-                {
-                    std::cout << "Could not open the file" << std::endl;
-                }
-                else
-                {
-                for (size_t i = 0; i < outputData.size(); ++i)
-                {
-                    csvFile << outputData[i];
-                    if (i < outputData.size() - 1)
                     {
                         csvFile << ",";
                     }

@@ -14,6 +14,10 @@
 #include "string_utils.hpp"
 #include <tesseract/publictypes.h>
 
+/**
+ * Functions that only deal with retrieving, returning, or processing images
+ */
+
 double calculateMSE(const QImage &img1, const QImage &img2)
 {
     if (img1.size() != img2.size())
@@ -84,13 +88,29 @@ Pix *captureScreenshot(
     if (qImage.format() != QImage::Format_ARGB32)
     {
         qImage = qImage.convertToFormat(QImage::Format_ARGB32);
+        if (qImage.format() != QImage::Format_ARGB32)
+        {
+            std::cerr << "Failed to convert image format to ARGB32." << std::endl;
+        }
     }
 
     pixImage = pixCreate(qImage.width(), qImage.height(), 32);
 
-    // TODO: Do we need pixData?
     uint8_t *pixData = reinterpret_cast<uint8_t *>(pixGetData(pixImage));
-    memcpy(pixData, qImage.bits(), qImage.sizeInBytes());
+    // memcpy(pixData, qImage.bits(), qImage.sizeInBytes());
+    const uint8_t *qImageData = qImage.bits();
+
+    for (int y = 0; y < qImage.height(); ++y)
+    {
+        for (int x = 0; x < qImage.width(); ++x)
+        {
+            int index = (y * qImage.bytesPerLine()) + (x * 4); // Assuming 4 bytes per pixel
+            pixData[index + 0] = qImageData[index + 2];        // Blue
+            pixData[index + 1] = qImageData[index + 1];        // Green
+            pixData[index + 2] = qImageData[index + 0];        // Red
+            pixData[index + 3] = qImageData[index + 3];        // Alpha
+        }
+    }
 
     return pixImage;
 }
@@ -105,16 +125,6 @@ std::string grabAndProcessArea(
     QRect captureArea(std::get<0>(area), std::get<1>(area), std::get<2>(area), std::get<3>(area));
     QPixmap screenshot = screen->grabWindow(0, captureArea.x(), captureArea.y(), captureArea.width(), captureArea.height());
     QImage qImage = screenshot.toImage();
-
-    QString fileName = QString::fromStdString(imageName + ".png");
-    if (saveImage)
-    {
-        if (!screenshot.save(fileName))
-        {
-            std::cerr << "Failed to save screenshot." << std::endl;
-            return "";
-        }
-    }
 
     Pix *pixImage = nullptr;
     if (qImage.format() != QImage::Format_ARGB32)
@@ -150,11 +160,11 @@ std::string grabAndProcessArea(
             std::replace(binaryResult.begin(), binaryResult.end(), '\n', ' ');
             delete[] binaryText;
             binaryResult = rtrim(binaryResult);
+        std::cout << "Binary result: " << binaryResult << std::endl;
 
             if (imageName.find("class_") != std::string::npos)
             {
                 return binaryResult;
-            }
         }
     }
 
@@ -167,6 +177,18 @@ std::string grabAndProcessArea(
         std::string result(text);
         std::replace(result.begin(), result.end(), '\n', ' ');
         delete[] text;
+        result = rtrim(result);
+        if (saveImage)
+        {
+            QString folderName = QString::fromStdString(result);
+            QString fileName = QString::fromStdString(imageName + ".png");
+
+            if (!saveImageToFolder(screenshot, folderName, fileName))
+            {
+                std::cerr << "Failed to save image to folder." << std::endl;
+            }
+        }
+
         return result;
     }
     else

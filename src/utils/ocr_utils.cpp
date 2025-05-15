@@ -68,11 +68,6 @@ std::string getTextFromBinary(
     tesseract::PageSegMode psm,
     std::string imageName)
 {
-    const std::string tessdataPath = "/opt/homebrew/share/tessdata";
-    const std::string versionFilePath = "data/newest_model_version.txt";
-    const std::string langCode = "eng";
-    const std::string fontName = "custom";
-
     // Get the latest model name
     std::string modelName;
     try
@@ -130,11 +125,6 @@ std::string getText(
     tesseract::PageSegMode psm,
     std::string imageName)
 {
-    const std::string tessdataPath = "/opt/homebrew/share/tessdata";
-    const std::string versionFilePath = "data/newest_model_version.txt";
-    const std::string langCode = "eng";
-    const std::string fontName = "custom";
-
     // Get the latest model name
     std::string modelName;
     try
