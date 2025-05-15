@@ -233,27 +233,27 @@ std::string getValidData(
         return textFromBinary;
     }
 
-        std::cout << "Invalid data: " << text << std::endl;
-        std::cout << "Attempting backup area..." << std::endl;
-        if (backupArea != std::make_tuple(0, 0, 0, 0))
+    std::cout << "Invalid data: " << text << std::endl;
+    std::cout << "Attempting backup area..." << std::endl;
+    if (backupArea != std::make_tuple(0, 0, 0, 0))
+    {
+        img = captureScreenshot(backupArea);
+        text = getText(img, saveImage, psm, imageName + "_" + generateRandomString(5));
+        std::cout << "Backup area text: " << text << std::endl;
+        textFromBinary = getTextFromBinary(img, saveImage, psm, imageName + "_" + generateRandomString(5));
+        std::cout << "Backup text from binary: " << textFromBinary << std::endl;
+        if (!isValid(text))
         {
-            img = captureScreenshot(backupArea);
-            text = getText(img, saveImage, psm, imageName + "_" + generateRandomString(5));
-            std::cout << "Backup area text: " << text << std::endl;
-            textFromBinary = getTextFromBinary(img, saveImage, psm, imageName + "_" + generateRandomString(5));
-            std::cout << "Backup text from binary: " << textFromBinary << std::endl;
-            if (!isValid(text))
+            std::cout << "Invalid data from backup area: " << text << std::endl;
+
+            if (saveImage)
             {
-                std::cout << "Invalid data from backup area: " << text << std::endl;
+                QString folderName = QString::fromStdString(text);
+                QString fileName = QString::fromStdString(imageName + ".png");
 
-                if (saveImage)
+                if (!saveImageToFolder(img, folderName, fileName))
                 {
-                    QString folderName = QString::fromStdString(text);
-                    QString fileName = QString::fromStdString(imageName + ".png");
-
-                    if (!saveImageToFolder(img, folderName, fileName))
-                    {
-                        std::cerr << "Failed to save image to folder." << std::endl;
+                    std::cerr << "Failed to save image to folder." << std::endl;
                 }
                 else
                 {
@@ -287,18 +287,18 @@ std::string getValidData(
                 return textFromBinary;
             }
 
-                pixDestroy(&img);
-                return "";
-            }
+            pixDestroy(&img);
+            return "";
+        }
 
         pixDestroy(&img);
 
-            return text;
-        }
-        else
-        {
-            std::cout << "No backup area provided." << std::endl;
-            pixDestroy(&img);
+        return text;
+    }
+    else
+    {
+        std::cout << "No backup area provided." << std::endl;
+        pixDestroy(&img);
         return "";
     }
 
