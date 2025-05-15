@@ -617,12 +617,12 @@ int main(int argc, char *argv[])
                     {
                         csvFile << newOutputData[i];
                         if (i < newOutputData.size() - 1)
-                    {
-                        csvFile << ",";
+                        {
+                            csvFile << ",";
+                        }
                     }
-                }
-                csvFile << "\n";
-                csvFile.flush();
+                    csvFile << "\n";
+                    csvFile.flush();
                     csvFile.close();
                 }
             }
