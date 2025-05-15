@@ -9,12 +9,9 @@ VERSION_FILE="data/newest_model_version.txt"  # File to track the newest model v
 
 # Ensure the version file exists and initialize it if necessary
 if [ ! -f "$VERSION_FILE" ]; then
+    echo "Version file not found. Initializing to 0."
     echo "0" > "$VERSION_FILE"
 fi
-
-# Increment the version number and update the version file
-NEW_VERSION=$((MODEL_VERSION + 1))
-echo "$NEW_VERSION" > "$VERSION_FILE"
 
 # Read the current version from the version file
 MODEL_VERSION=$(cat "$VERSION_FILE")
@@ -22,6 +19,13 @@ if [[ ! "$MODEL_VERSION" =~ ^[0-9]+$ ]]; then
     echo "Error: Version file does not contain a valid integer."
     exit 1
 fi
+
+echo "Current model version: $MODEL_VERSION"
+
+# Increment the version number and update the version file
+NEW_VERSION=$((MODEL_VERSION + 1))
+echo "$NEW_VERSION" > "$VERSION_FILE"
+echo "Incremented model version to $NEW_VERSION."
 
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
@@ -64,8 +68,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # Step 6: Combine into final .traineddata file
-MODEL_NAME="${LANG_CODE}.${FONT_NAME}V${MODEL_VERSION}.traineddata"
-echo "Creating final traineddata file with version: $MODEL_VERSION..."
+MODEL_NAME="${LANG_CODE}.${FONT_NAME}V${NEW_VERSION}.traineddata"
+echo "Creating final traineddata file with version: $NEW_VERSION..."
 # First, create a checkpoint with the correct file extension
 cp "$TESSDATA_PREFIX/$LANG_CODE.traineddata" "$OUTPUT_DIR/$MODEL_NAME"
 /opt/homebrew/opt/tesseract/bin/combine_tessdata -o "$OUTPUT_DIR/$MODEL_NAME" "$OUTPUT_DIR/fine_tuned_checkpoint"
