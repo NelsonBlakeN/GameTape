@@ -443,7 +443,7 @@ int main(int argc, char *argv[])
             if (newOutputData.size() > 0)
             {
                 // TODO: Move csv management to file utils
-                csvFile.open("output2.csv", std::ios::app);
+                csvFile.open("output.csv", std::ios::app);
                 if (!csvFile.is_open())
                 {
                     std::cout << "Could not open the file" << std::endl;
