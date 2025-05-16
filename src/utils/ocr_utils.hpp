@@ -11,10 +11,4 @@ std::string getText(
     tesseract::PageSegMode psm,
     std::string imageName);
 
-std::string getTextFromBinary(
-    Pix *pixIMage,
-    bool saveImage,
-    tesseract::PageSegMode psm,
-    std::string imageName);
-
 #endif // OCR_UTILS_HPP

@@ -112,7 +112,6 @@ std::string getValidData(
 {
     Pix *img = captureScreenshot(area);
     std::string text = getText(img, saveImage, psm, imageName + "_" + generateRandomString(5));
-    std::string textFromBinary = getTextFromBinary(img, saveImage, psm, imageName + "_" + generateRandomString(5));
 
     if (isValid(text))
     {
@@ -133,6 +132,8 @@ std::string getValidData(
     }
 
     std::cout << "Text was not valid, checking binary" << std::endl;
+    img = BinarizeImageOcr(img);
+    std::string textFromBinary = getText(img, saveImage, psm, "binary_" + imageName + "_" + generateRandomString(5));
 
     if (isValid(textFromBinary))
     {
@@ -159,7 +160,8 @@ std::string getValidData(
         img = captureScreenshot(backupArea);
         text = getText(img, saveImage, psm, imageName + "_" + generateRandomString(5));
         std::cout << "Backup area text: " << text << std::endl;
-        textFromBinary = getTextFromBinary(img, saveImage, psm, imageName + "_" + generateRandomString(5));
+        img = BinarizeImageOcr(img);
+        textFromBinary = getText(img, saveImage, psm, "binary_" + imageName + "_" + generateRandomString(5));
         std::cout << "Backup text from binary: " << textFromBinary << std::endl;
         if (!isValid(text))
         {
@@ -406,9 +408,7 @@ std::vector<std::string> getOutputData()
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    std::string windowName = mode == "phone" ? "iPhone Mirroring" : "DESKTOP-2MVSFNI (174 915 698)";
-    // windowName = "Xbox Series X | Xbox Remote Play on  Xbox.com";
-    windowName = "EA SPORTS™ College Football 25 | Xbox Cloud Gaming (Beta) on  Xbox.com";
+    std::string windowName = "EA SPORTS™ College Football 25 | Xbox Cloud Gaming (Beta) on  Xbox.com";
 
     bool result = moveWindow(windowName, 0, 40, 1008, 982);
     if (!result)
