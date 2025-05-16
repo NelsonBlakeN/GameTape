@@ -26,6 +26,7 @@ std::map<std::string, std::vector<std::string>> accepted_archs_by_position = {
     {"QB (Right)", {"*"}},
     {"OB (Right)", {"*"}},
     {"QB (Left)", {"*"}},
+    {"OB (Left)", {"*"}},
     {"HB", {"*"}},
     {"WR", {"Physical", "Deep Threat"}},
     {"TE", {"Vertical Threat"}},
@@ -44,69 +45,9 @@ std::map<std::string, std::vector<std::string>> accepted_archs_by_position = {
     {"SS", {"Zone", "Hybrid"}},
     {"FS", {"Zone", "Hybrid"}}};
 
-std::string get_data_val_for_player(const std::string &position, const std::string &archetype)
-{
-    // Helper lambda for checking if an element exists in a list
-    auto in_list = [](const std::string &value, const std::vector<std::string> &list)
-    {
-        return std::find(list.begin(), list.end(), value) != list.end();
-    };
-
-    if (in_list(position, {"QB (Right)", "QB (Left)"}))
-    {
-        return "QB";
-    }
-    else if (position == "HB")
-    {
-        return "HB";
-    }
-    else if (position == "WR")
-    {
-        return "Physical";
-    }
-    else if (position == "TE")
-    {
-        return "Vertical threat";
-    }
-    else if (in_list(position, {"LT", "RT"}) && archetype == "Pass Protector")
-    {
-        return "Pass protector";
-    }
-    else if (in_list(position, {"LG", "RG", "C", "LT", "RT"}) && in_list(archetype, {"Power", "Agile"}))
-    {
-        return "Power/agile";
-    }
-    else if (in_list(position, {"LE", "RE", "DT"}) && archetype == "Speed Rusher")
-    {
-        return "Speed rusher";
-    }
-    else if (in_list(position, {"LE", "RE", "DT", "ROLB", "LOLB", "MLB"}) && archetype == "Run Stopper")
-    {
-        return "Run stopper";
-    }
-    else if (in_list(position, {"LOLB", "ROLB"}) && archetype == "Pass Coverage")
-    {
-        return "Coverage";
-    }
-    else if (position == "MLB" && in_list(archetype, {"Field General", "Pass Coverage"}))
-    {
-        return "General/coverage";
-    }
-    else if (in_list(position, {"CB", "FS", "SS"}))
-    {
-        return "Zone/hybrid";
-    }
-    else if (position == "ATH")
-    {
-        return archetype;
-    }
-    return ""; // Default return if no match
-}
-
 // Xbox web streaming areas
 std::tuple<int, int, int, int> positionAreaWeb =
     {73, 356, 178 - 73, 374 - 356};
-
 std::tuple<int, int, int, int> archetypeAreaWeb =
     {874, 498, 967 - 874, 518 - 498};
 std::tuple<int, int, int, int> nameAreaWeb =
@@ -143,28 +84,6 @@ std::tuple<int, int, int, int> nameArea = {2945, 386, 3278 - 2945, 454 - 386};
 std::tuple<int, int, int, int> starArea = {2586, 274, 2770 - 2586, 307 - 274};
 std::tuple<int, int, int, int> playercardArea = {2943, 260, 3277 - 2943, 938 - 260};
 std::tuple<int, int, int, int> classArea = {2964, 572, 3106 - 2964, 603 - 572};
-
-std::vector<std::tuple<int, int, int, int>> areas = {
-    positionArea,
-    archetypeArea,
-    nameArea,
-    starArea,
-    playercardArea,
-    classArea};
-
-// TODO: This function may not be needed anymore once the trimming is properly implemented, but needs confirmation
-bool archCompare(std::string archResult, std::string archetype)
-{
-    for (size_t i = 0; i < archetype.size(); ++i)
-    {
-        if (archetype[i] != archResult[i])
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
 
 std::string extractStarValue(const std::string &input)
 {
@@ -482,88 +401,6 @@ std::vector<std::string> getOutputData()
     }
 
     return outputData;
-}
-
-std::vector<std::string> takeScreenshotAndPerformOCR()
-{
-    std::vector<std::string> playerData;
-
-    QScreen *screen = QApplication::primaryScreen();
-    if (!screen)
-    {
-        std::cerr << "Failed to access the screen." << std::endl;
-        return playerData;
-    }
-
-    std::string positionResult = grabAndProcessArea(positionAreaWeb, screen, "position_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
-    std::string archetypeResult = grabAndProcessArea(archetypeAreaWeb, screen, "archetype_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
-
-    // TODO: Position result should always be uppercase
-    if (!positionResult.empty() &&
-        !archetypeResult.empty())
-    {
-        // std::cout << "Position result: " << positionResult << std::endl;
-        positionResult = rtrim(positionResult);
-        // std::cout << "Archetype result: " << archetypeResult << std::endl;
-        archetypeResult = rtrim(archetypeResult);
-
-        auto it = accepted_archs_by_position.find(positionResult);
-        if (it == accepted_archs_by_position.end())
-        {
-            std::cout << "Position not found: " << positionResult << std::endl;
-            return playerData;
-        }
-
-        auto archs = it->second;
-        bool foundArchetype = false;
-        for (const auto &arch : archs)
-        {
-            if (arch == "*" || archCompare(archetypeResult, arch))
-            {
-                foundArchetype = true;
-            }
-        }
-        // TODO: Will this work now that trimming is introduced?
-        // if (std::find(archs.begin(), archs.end(), archetypeResult) != archs.end() ||
-        //     std::find(archs.begin(), archs.end(), "*") != archs.end())
-        if (foundArchetype)
-        {
-            std::string nameResult = grabAndProcessArea(nameAreaWeb, screen, "name_" + generateRandomString(5), false, tesseract::PSM_SINGLE_BLOCK);
-            std::replace(nameResult.begin(), nameResult.end(), '\n', ' ');
-            nameResult = rtrim(nameResult);
-            // std::cout << "Name result: " << nameResult << std::endl;
-            std::string starResult = grabAndProcessArea(starAreaWeb, screen, "star_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
-            // std::cout << "Star result: " << starResult << std::endl;
-            std::string starValue = extractStarValue(starResult);
-            std::string classResult = grabAndProcessArea(classAreaWeb, screen, "class_" + generateRandomString(5), false, tesseract::PSM_SINGLE_LINE);
-            // std::cout << "Class result: " << classResult << std::endl;
-
-            // TODO: Before compiling data row, use position and archetype with helper function to get appropriate value
-
-            playerData = {
-                toTitleCase(nameResult),
-                positionResult,
-                archetypeResult,
-                starValue,
-                classResult};
-
-            return playerData;
-        }
-        else
-        {
-            std::cout << "Did not find archetype '" << archetypeResult << "' for position " << positionResult << std::endl;
-            return playerData;
-        }
-    }
-    else
-    {
-        std::cout << "Position or archetype values were empty" << std::endl;
-        std::cout << "Position: " << positionResult << std::endl;
-        std::cout << "Archetype: " << archetypeResult << std::endl;
-        return playerData;
-    }
-
-    return playerData;
 }
 
 int main(int argc, char *argv[])
