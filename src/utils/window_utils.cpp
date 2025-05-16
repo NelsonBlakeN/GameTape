@@ -3,13 +3,13 @@
 #include <ApplicationServices/ApplicationServices.h>
 
 // Move the window to the specified screen coordinates
-void moveWindow(const std::string &windowTitle, int x, int y, int width, int height)
+bool moveWindow(const std::string &windowTitle, int x, int y, int width, int height)
 {
     CFArrayRef windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
     if (!windowList)
     {
         std::cerr << "Failed to get window list." << std::endl;
-        return;
+        return false;
     }
 
     bool windowFound = false;
@@ -107,7 +107,26 @@ void moveWindow(const std::string &windowTitle, int x, int y, int width, int hei
     if (!windowFound)
     {
         std::cerr << "Window with title '" << windowTitle << "' not found." << std::endl;
+        std::cout << "Available windows:" << std::endl;
+        // Loop through window list and output names
+        for (CFIndex i = 0; i < CFArrayGetCount(windowList); ++i)
+        {
+            CFDictionaryRef windowInfo = (CFDictionaryRef)CFArrayGetValueAtIndex(windowList, i);
+            CFStringRef windowName = (CFStringRef)CFDictionaryGetValue(windowInfo, kCGWindowName);
+
+            char windowNameBuffer[256];
+            if (windowName && CFStringGetCString(windowName, windowNameBuffer, sizeof(windowNameBuffer), kCFStringEncodingUTF8))
+            {
+                std::string name(windowNameBuffer);
+                std::cout << name << std::endl;
+            }
+        }
+
+        CFRelease(windowList);
+        return false;
     }
 
     CFRelease(windowList);
+
+    return true;
 }

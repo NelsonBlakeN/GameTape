@@ -3,10 +3,21 @@
 
 #include <string>
 #include <vector>
+#include <QApplication>
 #include <QScreen>
+#include <QPixmap>
+#include <QString>
+#include <leptonica/allheaders.h>
+#include <tesseract/publictypes.h>
 
 double calculateMSE(const QImage &img1, const QImage &img2);
 
-std::string grabAndProcessArea(std::tuple<int, int, int, int> area, QScreen *screen, std::string imageName = "screenshot");
+Pix *captureScreenshot(
+    std::tuple<int, int, int, int> area,
+    bool saveImage = false);
+
+void SavePixToFile(Pix *pix, const char *filename);
+
+Pix *BinarizeImageOcr(Pix *pixImage);
 
 #endif // SCREENSHOT_UTILS_HPP

@@ -9,6 +9,7 @@ std::string &rtrim(std::string &s, const char *t)
     return s;
 }
 
+// TODO: Perform in place
 std::string toTitleCase(const std::string &input)
 {
     if (input.empty())
