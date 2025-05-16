@@ -10,3 +10,5 @@ training_output/*
 !training_output/*.traineddata
 *images
 unicharset
+eng.lstm
+eng.traineddata
